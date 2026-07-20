@@ -107,6 +107,32 @@ jobs:
         with:
           name: build-artifacts
           path: dist/
+
+      - name: Debug Docker
+        run: |
+          echo "User:"
+          whoami
+
+          echo "ID:"
+          id
+
+          echo "Groups:"
+          groups
+
+          echo "Docker socket:"
+          ls -l /var/run/docker.sock
+
+          echo "Docker version:"
+          docker version
+
+          echo "Docker info:"
+          docker info
+
+          echo "Docker Buildx:"
+          docker buildx version
+
+          echo "Docker PS:"
+          docker ps    
       
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
