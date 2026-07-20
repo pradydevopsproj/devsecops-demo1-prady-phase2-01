@@ -12,8 +12,8 @@ on:
 jobs:
   test:
     name: Unit Testing
-    runs-on: self-hosted
-    # runs-on: ubuntu-latest
+    # runs-on: self-hosted
+    runs-on: ubuntu-latest
     # needs: [build]
     steps:
       - name: Checkout code
@@ -33,8 +33,8 @@ jobs:
 
   lint:
     name: Static Code Analysis
-    # runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
     # needs: [test]
     steps:
       - name: Checkout code
@@ -54,8 +54,8 @@ jobs:
 
   build:
     name: Build
-    # runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
     needs: [test, lint]
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
@@ -161,8 +161,8 @@ jobs:
 
   update-k8s:
     name: Update Kubernetes Deployment
-    runs-on: self-hosted
-    # runs-on: ubuntu-latest
+    # runs-on: self-hosted
+    runs-on: ubuntu-latest
     needs: [docker]
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     env:
