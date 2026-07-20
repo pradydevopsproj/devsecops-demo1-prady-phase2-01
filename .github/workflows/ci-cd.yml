@@ -90,8 +90,8 @@ jobs:
 
   docker:
     name: Docker Build and Push
-    # runs-on: ubuntu-latest
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
+    # runs-on: self-hosted
     needs: [build]
     env:
       REGISTRY: ghcr.io
