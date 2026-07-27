@@ -23,12 +23,11 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
-      - name: Upload Report
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload SARIF to GitHub Security tab
+        if: always() && hashFiles('results.sarif') != ''
+        uses: github/codeql-action/upload-sarif@v4
         with:
-          name: gitleaks-report
-          path: gitleaks.sarif      
+          sarif_file: results.sarif      
   test:
     name: Unit Testing
     runs-on: ubuntu-latest
