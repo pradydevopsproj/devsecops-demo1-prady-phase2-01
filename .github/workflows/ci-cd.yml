@@ -12,7 +12,9 @@ on:
 jobs:
   test:
     name: Unit Testing
-    runs-on: self-hosted
+    runs-on: 
+    - self-hosted
+    - kind-runner
     #runs-on: ubuntu-latest
     # needs: [build]
     steps:
