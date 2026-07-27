@@ -10,55 +10,17 @@ on:
     branches: [ main ]
 
 jobs:
-  gitleaks:
-    name: Secret Scan
+  scan:
+    name: gitleaks
     runs-on: ubuntu-latest
-    # - self-hosted
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v5
-      with:
-        fetch-depth: 0
-
-    - name: Install Gitleaks
-      run: |
-        GITLEAKS_VERSION="8.28.0"
-
-        wget -q https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz
-
-        tar -xzf gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz
-
-        sudo mv gitleaks /usr/local/bin/
-
-        gitleaks version
-
-    - name: Scan Repository
-      id: gitleaks
-      continue-on-error: true
-      run: |
-        gitleaks detect \
-          --source . \
-          --verbose \
-          --report-format sarif \
-          --report-path gitleaks.sarif
-
-    - name: Verify Report
-      if: always()
-      run: |
-        pwd
-        ls -lah
-        find . -name "*.sarif"
-
-    - name: Upload Report
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: gitleaks-report
-        path: gitleaks.sarif
-
-    - name: Fail Pipeline if Secrets Found
-      if: steps.gitleaks.outcome == 'failure'
-      run: exit 1    
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
   test:
     name: Unit Testing
     runs-on: ubuntu-latest
