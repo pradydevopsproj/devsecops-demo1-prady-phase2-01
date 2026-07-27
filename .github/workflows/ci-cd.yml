@@ -8,6 +8,7 @@ on:
       - 'helm-charts/tictac-app/values.yaml' # Ignore changes to this file to prevent loops
   pull_request:
     branches: [ main ]
+# Below permissions to be ebaled to store the gitleak scan data at "Security and quality" tab
 permissions:
   contents: read
   security-events: write
