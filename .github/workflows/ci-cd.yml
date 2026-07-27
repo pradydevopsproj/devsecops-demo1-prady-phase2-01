@@ -8,13 +8,13 @@ on:
       - 'helm-charts/tictac-app/values.yaml' # Ignore changes to this file to prevent loops
   pull_request:
     branches: [ main ]
-
+permissions:
+  contents: read
+  security-events: write
 jobs:
   scan:
     name: gitleaks
     runs-on: ubuntu-latest
-    permissions: 
-        contents: read
     steps:
       - uses: actions/checkout@v5
         with:
