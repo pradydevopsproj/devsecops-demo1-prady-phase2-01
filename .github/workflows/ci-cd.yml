@@ -28,7 +28,15 @@ jobs:
         if: always() && hashFiles('results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: results.sarif      
+          sarif_file: results.sarif   
+        # To retain above scan report for are specific timeline like here 30days  
+      - name: Upload Gitleaks report artifact
+        if: always() && hashFiles('results.sarif') != ''
+        uses: actions/upload-artifact@v5
+        with:
+          name: gitleaks-report
+          path: results.sarif
+          retention-days: 30    
   test:
     name: Unit Testing
     runs-on: ubuntu-latest
