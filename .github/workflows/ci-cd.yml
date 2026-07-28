@@ -48,7 +48,7 @@ jobs:
           gitleaks git \
             --report-format sarif \
             --report-path results.sarif \
-            --redact \  # without --redact prints the actual matched secret into the CI job logs
+            # --redact \  # without --redact prints the actual matched secret into the CI job logs
             --verbose \
             .
         # gitleaks exits non-zero when a leak is found; combined with
