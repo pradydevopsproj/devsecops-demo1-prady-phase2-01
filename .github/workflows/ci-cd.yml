@@ -2,7 +2,9 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ main ]
+    # branches: [ main ]
+    branches:
+      - '**'          # scan every commit on every branch, not just main
     paths-ignore:
       - 'kubernetes/deployment.yaml'  # Ignore changes to this file to prevent loops
       - 'helm-charts/tictac-app/values.yaml' # Ignore changes to this file to prevent loops
@@ -12,31 +14,61 @@ on:
 permissions:
   contents: read
   security-events: write
+# concurrency group — cancels stale in-flight scans when new commits land on the same branch, saving runner minutes.
+concurrency:
+  group: gitleaks-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true  
 jobs:
-  scan:
-    name: gitleaks
+  gitleaks:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+ 
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0
-      - uses: gitleaks/gitleaks-action@v2
+          fetch-depth: 0        # full history so gitleaks can scan every commit
+          persist-credentials: false
+ 
+      - name: Install Gitleaks
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITLEAKS_LICENSE: ${{ secrets.GITLEAKS_LICENSE }} # Only required for Organizations, not personal accounts.
+          GITLEAKS_VERSION: "8.30.1"
+        run: |
+          set -euo pipefail
+          curl -sSLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          sha256sum --ignore-missing -c "gitleaks_${GITLEAKS_VERSION}_checksums.txt"
+          tar -xf "gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz" gitleaks
+          sudo install -m 0755 gitleaks /usr/local/bin/gitleaks
+          gitleaks version
+ 
+      - name: Run Gitleaks
+        id: gitleaks
+        run: |
+          set -euo pipefail
+          gitleaks git \
+            --report-format sarif \
+            --report-path results.sarif \
+            --redact \  # without --redact prints the actual matched secret into the CI job logs
+            --verbose \
+            .
+        # gitleaks exits non-zero when a leak is found; combined with
+        # `set -e` above this step fails and fails the whole job/pipeline.
+ 
       - name: Upload SARIF to GitHub Security tab
         if: always() && hashFiles('results.sarif') != ''
         uses: github/codeql-action/upload-sarif@v4
         with:
-          sarif_file: results.sarif   
-        # To retain above scan report for are specific timeline like here 30days  
+          sarif_file: results.sarif
+          category: gitleaks
+          wait-for-processing: true
+ 
       - name: Upload Gitleaks report artifact
         if: always() && hashFiles('results.sarif') != ''
         uses: actions/upload-artifact@v5
         with:
           name: gitleaks-report
           path: results.sarif
-          retention-days: 30    
+          retention-days: 30
   test:
     name: Unit Testing
     runs-on: ubuntu-latest
@@ -83,7 +115,7 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
     # runs-on: self-hosted
-    needs: [scan, test, lint]
+    needs: [gitleaks, test, lint]
     env:
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
     steps:
